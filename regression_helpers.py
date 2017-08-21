@@ -182,3 +182,13 @@ def make_partial_dependence_data(X, var_name,
     min, max = np.min(X[var_name]), np.max(X[var_name])
     Xpd[var_name] = np.linspace(min, max, num=n_points)
     return Xpd
+
+
+def predicteds_vs_actuals(ax, x, y, y_hat, n_bins=50):
+    bins, endpoints = pd.cut(x, bins=n_bins, retbins=True)
+    centers = (endpoints[:-1] + endpoints[1:]) / 2
+    y_hat_means = pd.DataFrame({'y_hat': y_hat, 'bins': bins}).groupby("bins").mean()["y_hat"]
+    ax.scatter(x, y, color="grey", alpha=0.5, label="Data")
+    ax.scatter(centers, y_hat_means, s=50, label=None)
+    ax.plot(centers, y_hat_means, label="Mean Predicted")
+    ax.legend()
