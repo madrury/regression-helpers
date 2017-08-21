@@ -56,7 +56,14 @@ def plot_univariate_smooth(ax, x, y,
                               alpha=0.5, color="lightblue")        
         plot_smoother(ax, x, y, x_lim, n_knots, 
                       linewidth=3, color="blue")
-        
+
+def make_natural_cubic_regression(n_knots):
+    return Pipeline([
+        ('standardizer', StandardScaler()),
+        ('nat_cubic', NaturalCubicSpline(-2, 2, n_knots=n_knots)),
+        ('regression', LinearRegression(fit_intercept=True))
+    ])
+
 def plot_smoother(ax, x, y, x_lim, n_knots, **kwargs):
     ncr = make_natural_cubic_regression(n_knots)
     ncr.fit(x, y)
