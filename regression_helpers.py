@@ -1,5 +1,13 @@
+from math import ceil
+
 import pandas as pd
+import numpy as np
 from sklearn.utils import resample
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
 from basis_expansions import NaturalCubicSpline
 
 
@@ -70,6 +78,22 @@ def plot_smoother(ax, x, y, x_lim, n_knots, **kwargs):
     t = np.linspace(x_lim[0], x_lim[1], num=250)
     y_smoothed = ncr.predict(t.reshape(-1, 1))
     ax.plot(t, y_smoothed, **kwargs)
+
+
+def display_coef(model, coef_names):
+    """Pretty print a table of the parameter estimates in a linear model.
+
+    Parameters
+    ----------
+    model: A fit sklean object with a `coef_` attribute.
+
+    coef_names: A list of names associated with the coefficients.
+    """
+    print("{:<35}{:<20}".format("Name", "Parameter Estimate"))
+    print("-"*(35 + 20))
+    for coef, name in zip(model.coef_, coef_names):
+        row = "{:<35}{:<20}".format(name, coef)
+        print(row)
 
 
 def bootstrap_train(model, X, y, bootstraps=1000, **kwargs):
