@@ -105,3 +105,49 @@ def plot_bootstrap_coefs(bootstrap_coefs, coef_names, n_col=3):
         ax.hist(bootstrap_coefs[:, idx], bins=25, color="grey", alpha=0.5)
         ax.set_title(coef_names[idx])
     return fig, axs
+
+
+def plot_partial_depenence(ax, model, X, var_name,
+                           y=None, pipeline=None, n_points=250):
+    """Create a partial dependence plot of a feature in a model.
+
+    Parameters
+    ----------
+    ax: A matplotlib axis object to draw the partial dependence plot on.
+
+    model: A trained sklearn model.  Must implement a `predict` method.
+
+    X: The raw data to use in making predictions when drawing the partial
+    dependence plot. Must be a pandas DataFrame.
+
+    var_name: A string, the name of the varaible to make the partial dependence
+    plot of.
+
+    y: The y values, only needed if a scatter plot of x vs. y is desired.
+
+    pipeline: A sklearn Pipeline object containing the transformations of the
+    raw features used in the model.
+
+    n_points: The number of points to use in the grid when drawing the plot.
+    """
+    Xpd = make_partial_dependence_data(
+        X, var_name, n_points, pipeline=pipeline)
+    x_plot = Xpd[var_name]
+    if pipeline is not None:
+        Xpd = pipeline.transform(Xpd)
+    if y is not None:
+        ax.scatter(X[var_name], y, color="grey", alpha=0.5)
+    y_hat = model.predict(Xpd)
+    ax.plot(x_plot, y_hat, linewidth=3, color="blue")
+
+def make_partial_dependence_data(X, var_name,
+                                 n_points=250,
+                                 pipeline=None):
+    Xpd = np.empty((n_points, X.shape[1]))
+    Xpd = pd.DataFrame(Xpd, columns=X.columns)
+    all_other_var_names = set(X.columns) - {var_name}
+    for name in all_other_var_names:
+        Xpd[name] = X[name].mean()
+    min, max = np.min(X[var_name]), np.max(X[var_name])
+    Xpd[var_name] = np.linspace(min, max, num=n_points)
+    return Xpd
