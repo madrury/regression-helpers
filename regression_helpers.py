@@ -63,3 +63,45 @@ def plot_smoother(ax, x, y, x_lim, n_knots, **kwargs):
     t = np.linspace(x_lim[0], x_lim[1], num=250)
     y_smoothed = ncr.predict(t.reshape(-1, 1))
     ax.plot(t, y_smoothed, **kwargs)
+
+
+def bootstrap_train(model, X, y, bootstraps=1000, **kwargs):
+    """Train a (linear) model on multiple bootstrap samples of some data and
+    return all of the parameter estimates.
+
+    Parameters
+    ----------
+    model: A sklearn class whose instances have a `fit` method, and a `coef_`
+    attribute.
+
+    X: A two dimensional numpy array of shape (n_observations, n_features).
+    
+    y: A one dimensional numpy array of shape (n_observations).
+
+    bootstraps: An integer, the number of boostrapped models to train.
+
+    Returns
+    -------
+    bootstrap_coefs: A (bootstraps, n_features) numpy array.  Each row contains
+    the parameter estimates for one trained boostrapped model.
+    """
+    bootstrap_coefs = np.empty(shape=(bootstraps, X.shape[1]))
+    for i in range(bootstraps):
+        boot_idxs = np.random.choice(X.shape[0], size=X.shape[0], replace=True)
+        X_boot = X[boot_idxs, :]
+        y_boot = y[boot_idxs]
+        M = model(**kwargs)
+        M.fit(X_boot, y_boot)
+        bootstrap_coefs[i, :] = M.coef_
+    return bootstrap_coefs
+
+def plot_bootstrap_coefs(bootstrap_coefs, coef_names, n_col=3):
+    """Plot histograms of the bootstrapped parameter estimates from a model.
+    """
+    n_coeffs = bootstrap_coefs.shape[1]
+    n_row = int(ceil(n_coeffs / n_col))
+    fig, axs = plt.subplots(n_row, n_col, figsize=(n_col*3, n_row*2))
+    for idx, ax in enumerate(axs.flatten()):
+        ax.hist(bootstrap_coefs[:, idx], bins=25, color="grey", alpha=0.5)
+        ax.set_title(coef_names[idx])
+    return fig, axs
